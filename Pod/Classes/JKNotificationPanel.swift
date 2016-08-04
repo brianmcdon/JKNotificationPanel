@@ -26,11 +26,11 @@ public class JKNotificationPanel: NSObject {
     var dismissAction:(()->Void)? = nil
     
     var completionHandler:()->Void = { }    
-    var view:UIView!
+    var view:UIView?
     var tapGesture:UITapGestureRecognizer!
     var verticalSpace:CGFloat = 0
     
-    var withView:UIView!
+    var withView:UIView?
     var navigationBar:UINavigationBar?
     
     public override init() {
@@ -116,53 +116,43 @@ public class JKNotificationPanel: NSObject {
         self.view = UIView()
         
         self.tapGesture = UITapGestureRecognizer(target: self, action: #selector(JKNotificationPanel.tapHandler))
-        self.view.addGestureRecognizer(tapGesture)
+        self.view!.addGestureRecognizer(tapGesture)
         
-        self.view.alpha = 1
-        self.view.frame = CGRectMake(0, top , width, height)
-        self.view.backgroundColor = UIColor.clearColor()
-        self.view.addSubview(view)
-        self.view.bringSubviewToFront(view)
+        self.view!.alpha = 1
+        self.view!.frame = CGRectMake(0, top , width, height)
+        self.view!.backgroundColor = UIColor.clearColor()
+        self.view!.addSubview(view)
+        self.view!.bringSubviewToFront(view)
         view.autoresizingMask = [.FlexibleWidth]
-        self.view.autoresizingMask = [.FlexibleWidth]
-        inView.addSubview(self.view)
+        self.view!.autoresizingMask = [.FlexibleWidth]
+        inView.addSubview(self.view!)
         
         
         // Start Animate
         
-        let expandView = {
-            self.view.alpha = 1
-            self.view.frame = CGRectMake(0, self.verticalSpace, width, height + 5)
-        }
         
-        UIView.animateWithDuration(0.2, animations: expandView ) { (success) -> Void in
-            
-            guard (self.view != nil) else { return }
-            
-            let resizeViewToDefault = {
-                self.view.frame = CGRectMake(0, self.verticalSpace , width, height)
-            }
-            
-            let resizeViewToDefaultComplete = { (animateDone:Bool) -> Void in
-                if self.timeUntilDismiss > 0 {
+        UIView.animateWithDuration(0.2, animations: { [weak self] in
+                self?.view?.alpha = 1
+                self?.view?.frame = CGRectMake(0, self?.verticalSpace ?? 0, width, height + 5)
+            }) { (success) in
+                if let view = self.view {
                     
-                    let prepareFade = {
-                        self.view.alpha = 0.8
-                    }
-                    
-                    let prepareFadeComplete = { (animateDone:Bool) -> Void in
-                        if animateDone == true {
-                            self.animateFade(0.2)
-                        }
-                    }
-                    
-                    UIView.animateWithDuration(0.1, delay: self.timeUntilDismiss, options: .AllowUserInteraction, animations: prepareFade, completion: prepareFadeComplete)
+                    UIView.animateWithDuration(0.2, animations: { 
+                        self.view?.frame = CGRectMake(0, self.verticalSpace , width, height)
+                        }, completion: { (success) in
+                            if self.timeUntilDismiss > 0 {
+                                UIView.animateWithDuration(0.1, delay: self.timeUntilDismiss, options: .AllowUserInteraction, animations: { 
+                                    self.view?.alpha = 0.8
+                                    }, completion: { (success) in
+                                        if success {
+                                            self.animateFade(0.2)
+                                        }
+                                })
+                                
+                            }
+                    })
                 }
-            }
-            
-            UIView.animateWithDuration(0.2, animations: resizeViewToDefault , completion: resizeViewToDefaultComplete )
         }
-        
     }
     
     
@@ -190,20 +180,21 @@ public class JKNotificationPanel: NSObject {
     
     
     func animateFade(duration:NSTimeInterval) {
-        guard (self.view != nil) else {return}
-        var frame = self.view.frame
-        frame.size.height = -10
+        if let view = self.view{
+            var frame = view.frame
+            frame.size.height = -10
         
-        let fade = {
-            self.view.alpha = 0
-            self.view.frame = frame
+            let fade = {
+                view.alpha = 0
+                view.frame = frame
+            }
+        
+            let fadeComplete = { (success:Bool) -> Void in
+                self.removePanelFromSuperView()
+            }
+        
+            UIView.animateWithDuration(duration, animations: fade, completion: fadeComplete)
         }
-        
-        let fadeComplete = { (success:Bool) -> Void in
-            self.removePanelFromSuperView()
-        }
-        
-        UIView.animateWithDuration(duration, animations: fade, completion: fadeComplete)
     }
     
     func removePanelFromSuperView() {
