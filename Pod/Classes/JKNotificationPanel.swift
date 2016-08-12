@@ -30,12 +30,17 @@ public class JKNotificationPanel: NSObject {
     var tapGesture:UITapGestureRecognizer!
     var verticalSpace:CGFloat = 0
     
-    var withView:UIView?
+    public var withView:UIView?
     var navigationBar:UINavigationBar?
+    var timer: NSTimer?
     
     public override init() {
         super.init()
-   }
+    }
+    
+    deinit {
+        timer?.invalidate()
+    }
     
     public func transitionToSize(size:CGSize) {
         
@@ -125,8 +130,12 @@ public class JKNotificationPanel: NSObject {
         self.view!.bringSubviewToFront(view)
         view.autoresizingMask = [.FlexibleWidth]
         self.view!.autoresizingMask = [.FlexibleWidth]
-        inView.addSubview(self.view!)
         
+        if inView.subviews.count > 1 {
+            inView.insertSubview(self.view!, atIndex: 1)
+        }else{
+            inView.addSubview(self.view!)
+        }
         
         // Start Animate
         
@@ -178,14 +187,25 @@ public class JKNotificationPanel: NSObject {
         }
     }
     
+    public func dismissAfterDuration(duration: NSTimeInterval) {
+        
+        timer?.invalidate()
+        
+        timer = NSTimer.scheduledTimerWithTimeInterval(duration, target: self, selector: #selector(JKNotificationPanel.dismissViewNow), userInfo: nil, repeats: false)
+    }
+    
+    func dismissViewNow() {
+        animateFade(0.3)
+    }
     
     func animateFade(duration:NSTimeInterval) {
         if let view = self.view{
             var frame = view.frame
-            frame.size.height = -10
+            frame.origin.y = frame.origin.y - frame.size.height
+//            frame.size.height = -10
         
             let fade = {
-                view.alpha = 0
+//                view.alpha = 0
                 view.frame = frame
             }
         
