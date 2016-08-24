@@ -107,11 +107,15 @@ public class JKNotificationPanel: NSObject {
         self.showNotify(withView: view, inView: navigation.view )
     }
     
-    public func showNotify(withView view: UIView,inView: UIView) {
+    public func showNotify(withView view: UIView,inView: UIView, belowView: UIView? = nil) {
         
  
         reset()
- 
+        if let belowView = belowView{
+            verticalSpace = belowView.frame.size.height
+        }
+
+        
         self.withView = view
         
         let width = inView.frame.width
@@ -131,12 +135,16 @@ public class JKNotificationPanel: NSObject {
         view.autoresizingMask = [.FlexibleWidth]
         self.view!.autoresizingMask = [.FlexibleWidth]
         
-        if inView.subviews.count > 1 {
-            inView.insertSubview(self.view!, atIndex: 1)
+        if let belowView = belowView {
+            inView.insertSubview(self.view!, belowSubview: belowView)
         }else{
-            inView.addSubview(self.view!)
+            if inView.subviews.count > 1 {
+                inView.insertSubview(self.view!, atIndex: 1)
+            }else{
+                inView.addSubview(self.view!)
+            }
         }
-        
+    
         // Start Animate
         
         
